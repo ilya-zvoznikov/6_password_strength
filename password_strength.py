@@ -28,13 +28,13 @@ def contains_special_chars(password):
 def mached_by_banned_patterns(password):
     patterns = [
         # dates
-        r'\d{6}',
-        r'\d{8}',
-        r'\d\d[,-\.]\d\d[,-\.]\d\d',
+        r'(?:[1-9]|0[1-9]|[1-2]\d|3[01])[\.\/-]?(?:[1-9]|0[1-9]|1[0-2])[\.\/-]?(?:[1-2]\d{3})',
         # phone numbers
-        r''
+        r'[78]?[?:(-]?9\d{2}[?:)-]?\d{3}-?\d{2}-?\d{2}',
+        # license plate numbers
+        # r''
     ]
-    return not any(re.match(pattern, password) for pattern in patterns)
+    return any(re.match(pattern, password) for pattern in patterns)
 
 
 def get_passwords_blacklist():
@@ -53,7 +53,7 @@ def get_password_strength(password):
                   # contains_lowercase_letters(password),
                   # contains_uppercase_letters(password),
                   # contains_special_chars(password),
-                  mached_by_banned_patterns(password),
+                  not mached_by_banned_patterns(password),
                   0,
                   0
                   ]
@@ -65,4 +65,5 @@ if __name__ == '__main__':
     print('Введите пароль для проверки его силы:')
     password = input()
     print('Сила Вашего пароля по шкале от 1 до 10:')
-    print(get_password_strength(password))
+    # print(get_password_strength(password))
+    print(mached_by_banned_patterns(password))
