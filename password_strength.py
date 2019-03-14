@@ -1,4 +1,6 @@
 import re
+import requests
+import hashlib
 
 
 def has_normal_length(password):
@@ -28,17 +30,34 @@ def contains_special_chars(password):
 def mached_by_banned_patterns(password):
     patterns = [
         # dates
-        r'(?:[1-9]|0[1-9]|[1-2]\d|3[01])[\.\/-]?(?:[1-9]|0[1-9]|1[0-2])[\.\/-]?(?:[1-2]\d{3})',
+        r'(?:[1-9]|0[1-9]|[1-2]\d|3[01])[./-]?'
+        r'(?:[1-9]|0[1-9]|1[0-2])[./-]?'
+        r'(?:[1-2]\d{3})',
         # phone numbers
         r'[78]?[?:(-]?9\d{2}[?:)-]?\d{3}-?\d{2}-?\d{2}',
         # license plate numbers
-        # r''
+        r'[AaBbCcEeHhKkMmOoPpTtXxАаВвЕеКкМмНнОоРрСсТтХх]\d{3}'
+        r'[AaBbCcEeHhKkMmOoPpTtXxАаВвЕеКкМмНнОоРрСсТтХх]{2}(?:\d{2,3})?'
     ]
     return any(re.match(pattern, password) for pattern in patterns)
 
 
-def get_passwords_blacklist():
-    return None
+def is_diverse(password):
+    return len(set(password)) > 6
+
+
+def has_been_pwned_online(password):
+    url = r'https://api.pwnedpasswords.com/range/{}'
+    hash_obj = hashlib.sha1(password.encode('utf-8'))
+    hash = hash_obj.hexdigest().upper()
+    try:
+        response = requests.get(url.format(hash[:5]))
+        password_range = response.text
+    except (requests.exceptions.ConnectionError,
+            requests.exceptions.ConnectTimeout):
+        return True
+
+    return hash[5:] in password_range
 
 
 def get_password_strength(password):
@@ -47,17 +66,16 @@ def get_password_strength(password):
 
     # max_score = 10
     check_list = [1,
-                  # has_normal_length(password),
-                  # has_perfect_length(password),
-                  # contains_numbers(password),
-                  # contains_lowercase_letters(password),
-                  # contains_uppercase_letters(password),
-                  # contains_special_chars(password),
+                  has_normal_length(password),
+                  has_perfect_length(password),
+                  contains_numbers(password),
+                  contains_lowercase_letters(password),
+                  contains_uppercase_letters(password),
+                  contains_special_chars(password),
                   not mached_by_banned_patterns(password),
-                  0,
-                  0
+                  is_diverse(password),
+                  not has_been_pwned_online(password)
                   ]
-    # strength = round(sum(check_list) / len(check_list) * max_score)
     return sum(check_list)
 
 
@@ -65,5 +83,4 @@ if __name__ == '__main__':
     print('Введите пароль для проверки его силы:')
     password = input()
     print('Сила Вашего пароля по шкале от 1 до 10:')
-    # print(get_password_strength(password))
-    print(mached_by_banned_patterns(password))
+    print(get_password_strength(password))
