@@ -11,7 +11,7 @@ Example of script launch on Linux, Python 3.5:
 ```bash
 $ python password_strength.py
 Введите пароль для проверки его силы:
-QwErTy12345
+Password:
 Сила Вашего пароля по шкале от 1 до 10:
 7
 ```

@@ -1,6 +1,8 @@
+import getpass
+import hashlib
 import re
 import requests
-import hashlib
+import sys
 
 
 def has_normal_length(password):
@@ -49,38 +51,42 @@ def is_diverse(password):
 def has_been_pwned_online(password):
     url = r'https://api.pwnedpasswords.com/range/{}'
     hash_obj = hashlib.sha1(password.encode('utf-8'))
-    hash = hash_obj.hexdigest().upper()
+    hash_str = hash_obj.hexdigest().upper()
     try:
-        response = requests.get(url.format(hash[:5]))
+        response = requests.get(url.format(hash_str[:5]))
         password_range = response.text
     except (requests.exceptions.ConnectionError,
             requests.exceptions.ConnectTimeout):
         return True
 
-    return hash[5:] in password_range
+    return hash_str[5:] in password_range
 
 
 def get_password_strength(password):
     if not password:
-        return 'Пароль не указан'
+        return None
 
     # max_score = 10
-    check_list = [1,
-                  has_normal_length(password),
-                  has_perfect_length(password),
-                  contains_numbers(password),
-                  contains_lowercase_letters(password),
-                  contains_uppercase_letters(password),
-                  contains_special_chars(password),
-                  not mached_by_banned_patterns(password),
-                  is_diverse(password),
-                  not has_been_pwned_online(password)
-                  ]
+    check_list = [
+        1,
+        has_normal_length(password),
+        has_perfect_length(password),
+        contains_numbers(password),
+        contains_lowercase_letters(password),
+        contains_uppercase_letters(password),
+        contains_special_chars(password),
+        not mached_by_banned_patterns(password),
+        is_diverse(password),
+        not has_been_pwned_online(password),
+    ]
+
     return sum(check_list)
 
 
 if __name__ == '__main__':
     print('Введите пароль для проверки его силы:')
-    password = input()
+    password = getpass.getpass()
+    if not password:
+        sys.exit('Пароль не указан')
     print('Сила Вашего пароля по шкале от 1 до 10:')
     print(get_password_strength(password))
